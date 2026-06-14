@@ -1,0 +1,29 @@
+{
+  "name": "bid-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bid OS — SaaS platform for managing and analyzing Saudi tenders",
+  "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:generate": "pnpm --filter @bid-os/db generate",
+    "db:validate": "pnpm --filter @bid-os/db validate",
+    "db:migrate": "pnpm --filter @bid-os/db migrate",
+    "db:seed": "pnpm --filter @bid-os/db seed",
+    "db:studio": "pnpm --filter @bid-os/db studio"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}

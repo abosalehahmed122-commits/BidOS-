@@ -1,0 +1,52 @@
+# Local development services for Bid OS.
+# Not required to build/test (dev defaults to disk storage + mock AI + inline queue),
+# but provides real Postgres / Redis / S3 (MinIO) when you want them.
+#
+#   docker compose up -d
+#
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bidos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bidos
+      POSTGRES_PASSWORD: bidos
+      POSTGRES_DB: bidos
+    ports:
+      - "5432:5432"
+    volumes:
+      - bidos-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bidos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: bidos-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - bidos-redis:/data
+
+  minio:
+    image: minio/minio:latest
+    container_name: bidos-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: bidos
+      MINIO_ROOT_PASSWORD: bidos-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - bidos-minio:/data
+
+volumes:
+  bidos-pg:
+  bidos-redis:
+  bidos-minio:

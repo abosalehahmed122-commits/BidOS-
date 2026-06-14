@@ -1,0 +1,72 @@
+import { FileText } from 'lucide-react';
+import { forWorkspace } from '@bid-os/db';
+import { requireSession } from '@/lib/session';
+import { PageHeader } from '@/components/app/page-header';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { daysUntil, formatDate } from '@/lib/format';
+
+const TYPE_LABELS: Record<string, string> = {
+  COMMERCIAL_REGISTRATION: 'السجل التجاري',
+  ZAKAT_CERTIFICATE: 'شهادة الزكاة',
+  GOSI_CERTIFICATE: 'التأمينات الاجتماعية',
+  CONTRACTOR_CLASSIFICATION: 'تصنيف المقاولين',
+  VAT_CERTIFICATE: 'الشهادة الضريبية',
+  CHAMBER_MEMBERSHIP: 'عضوية الغرفة',
+  COMPANY_PROFILE: 'الملف التعريفي',
+  CV: 'سيرة ذاتية',
+  PREVIOUS_WORK: 'سابقة أعمال',
+  BANK_GUARANTEE: 'ضمان بنكي',
+  OTHER: 'أخرى',
+};
+
+function ExpiryBadge({ expiryDate }: { expiryDate: Date | null }) {
+  if (!expiryDate) return <Badge variant="slate">بدون انتهاء</Badge>;
+  const days = daysUntil(expiryDate);
+  if (days < 0) return <Badge variant="red">منتهية</Badge>;
+  if (days <= 30) return <Badge variant="amber">تنتهي خلال {days} يوم</Badge>;
+  return <Badge variant="emerald">سارية</Badge>;
+}
+
+export default async function DocumentsPage() {
+  const { membership } = await requireSession();
+  const db = forWorkspace(membership.workspaceId);
+  const docs = await db.companyDocument.findMany({ orderBy: { expiryDate: 'asc' } });
+
+  return (
+    <div>
+      <PageHeader title="مكتبة وثائق الشركة" description="وثائقك المتكررة مع تنبيه قبل انتهاء الصلاحية" />
+      <div className="px-6 py-6 lg:px-10">
+        {docs.length === 0 ? (
+          <Card className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+            <FileText className="h-12 w-12 text-slate-600" />
+            <p className="text-slate-200">لا توجد وثائق محفوظة بعد</p>
+            <p className="text-sm text-slate-400">
+              احفظ السجل التجاري والزكاة والتصنيف لإدراجها تلقائياً في العروض.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {docs.map((doc) => (
+              <Card key={doc.id}>
+                <CardContent className="space-y-3 p-5">
+                  <div className="flex items-start justify-between">
+                    <FileText className="h-6 w-6 text-gold-400" />
+                    <ExpiryBadge expiryDate={doc.expiryDate} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-100">{doc.name}</p>
+                    <p className="text-xs text-slate-500">{TYPE_LABELS[doc.type] ?? 'أخرى'}</p>
+                  </div>
+                  {doc.expiryDate && (
+                    <p className="text-xs text-slate-500">تنتهي في {formatDate(doc.expiryDate)}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
