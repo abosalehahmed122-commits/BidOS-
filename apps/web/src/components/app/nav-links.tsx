@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FolderArchive, FolderKanban, LayoutDashboard } from 'lucide-react';
+import { FolderArchive, FolderKanban, LayoutDashboard, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const items = [
-  { href: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-  { href: '/tenders', label: 'المناقصات', icon: FolderKanban },
-  { href: '/documents', label: 'مكتبة الوثائق', icon: FolderArchive },
+  { href: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, prefix: '/dashboard' },
+  { href: '/tenders', label: 'المناقصات', icon: FolderKanban, prefix: '/tenders' },
+  { href: '/documents', label: 'مكتبة الوثائق', icon: FolderArchive, prefix: '/documents' },
+  { href: '/settings/account', label: 'الإعدادات', icon: Settings, prefix: '/settings' },
 ];
 
 export function NavLinks() {
@@ -16,7 +17,7 @@ export function NavLinks() {
   return (
     <nav className="space-y-1">
       {items.map((it) => {
-        const active = pathname === it.href || pathname.startsWith(`${it.href}/`);
+        const active = pathname === it.href || pathname.startsWith(`${it.prefix}/`) || pathname === it.prefix;
         return (
           <Link
             key={it.href}
