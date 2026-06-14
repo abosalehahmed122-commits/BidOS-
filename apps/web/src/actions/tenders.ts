@@ -3,10 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { forWorkspace, type Prisma } from '@bid-os/db';
-import { analyzeAndScore, getProvider } from '@bid-os/ai';
+import { analyzeAndScore, getProvider, type DocumentPage } from '@bid-os/ai';
 import { can, createTenderSchema, ForbiddenError, recordDecisionSchema } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
 import { getStorage, tenderDocKey } from '@/lib/storage';
+import { extractPdfPages } from '@/lib/pdf';
+import { enqueue } from '@/lib/queue';
 
 export interface TenderFormState {
   error?: string;
@@ -111,10 +113,31 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
 
   try {
     const provider = getProvider();
-    const { result, usage, bidScore } = await analyzeAndScore(provider, {
-      title: tender.title,
-      pages: [],
+
+    // Load the booklet and extract real page text to feed the provider.
+    const booklet = await db.tenderDocument.findFirst({
+      where: { tenderId, kind: 'BOOKLET' },
+      orderBy: { createdAt: 'desc' },
     });
+    let pages: DocumentPage[] = [];
+    if (booklet) {
+      try {
+        const bytes = await getStorage().read(booklet.storageKey);
+        pages = await extractPdfPages(bytes);
+        if (pages.length > 0) {
+          await db.tenderDocument.update({
+            where: { id: booklet.id },
+            data: { pageCount: pages.length },
+          });
+        }
+      } catch {
+        // Booklet unreadable / not a digital PDF — fall back to title-only.
+      }
+    }
+
+    const { result, usage, bidScore } = await enqueue('tender.analyze', () =>
+      analyzeAndScore(provider, { title: tender.title, pages }),
+    );
 
     // Replace previously derived data (decisions/audit are kept).
     await db.requirement.deleteMany({ where: { tenderId } });

@@ -5,6 +5,7 @@ const nextConfig = {
   // Booklets can be large; allow bigger Server Action payloads for uploads.
   experimental: {
     serverActions: { bodySizeLimit: '25mb' },
+    serverComponentsExternalPackages: ['unpdf'],
   },
   eslint: { ignoreDuringBuilds: true },
 };
