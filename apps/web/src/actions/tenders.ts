@@ -9,6 +9,7 @@ import { requireSession } from '@/lib/session';
 import { getStorage, tenderDocKey } from '@/lib/storage';
 import { extractPdfPages } from '@/lib/pdf';
 import { enqueue } from '@/lib/queue';
+import { consume, getBillingContext, incrementUsage } from '@/lib/billing';
 
 export interface TenderFormState {
   error?: string;
@@ -92,6 +93,13 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
   const tender = await db.tender.findFirst({ where: { id: tenderId } });
   if (!tender) throw new Error('المناقصة غير موجودة');
 
+  // Enforce the plan's monthly tender-analysis limit.
+  const { limits } = await getBillingContext(ws);
+  const allowed = await consume(ws, 'TENDERS_ANALYZED', 1, limits.tendersPerMonth);
+  if (!allowed) {
+    throw new Error('تم بلوغ حد عدد المناقصات في باقتك لهذا الشهر. يرجى ترقية الباقة من الإعدادات.');
+  }
+
   const lastRun = await db.extractionRun.findFirst({
     where: { tenderId },
     orderBy: { version: 'desc' },
@@ -134,6 +142,8 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
         // Booklet unreadable / not a digital PDF — fall back to title-only.
       }
     }
+
+    if (pages.length > 0) await incrementUsage(ws, 'AI_PAGES', pages.length);
 
     const { result, usage, bidScore } = await enqueue('tender.analyze', () =>
       analyzeAndScore(provider, { title: tender.title, pages }),

@@ -6,6 +6,7 @@ import { forWorkspace, prisma } from '@bid-os/db';
 import { can } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
 import { buildDefaultSections } from '@/lib/proposal-template';
+import { consume, getBillingContext } from '@/lib/billing';
 
 export interface ProposalState {
   error?: string;
@@ -23,6 +24,12 @@ export async function generateProposalAction(tenderId: string): Promise<void> {
     include: { requirements: true, bidScore: true, deadlines: { orderBy: { dueAt: 'asc' } } },
   });
   if (!tender) throw new Error('not found');
+
+  const { limits } = await getBillingContext(ws);
+  const allowed = await consume(ws, 'PROPOSALS_GENERATED', 1, limits.proposalsPerMonth);
+  if (!allowed) {
+    throw new Error('تم بلوغ حد توليد العروض في باقتك لهذا الشهر. يرجى ترقية الباقة من الإعدادات.');
+  }
 
   const workspace = await prisma.workspace.findUnique({ where: { id: ws } });
   const sections = buildDefaultSections(tender, workspace?.name ?? 'الشركة');

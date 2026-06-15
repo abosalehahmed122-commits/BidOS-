@@ -8,6 +8,7 @@ const items = [
   { href: '/settings/account', label: 'حسابي' },
   { href: '/settings/members', label: 'الأعضاء' },
   { href: '/settings/workspace', label: 'مساحة العمل' },
+  { href: '/settings/billing', label: 'الاشتراك' },
 ];
 
 export function SettingsNav() {
