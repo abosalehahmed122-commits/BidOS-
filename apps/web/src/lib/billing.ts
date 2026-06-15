@@ -1,4 +1,5 @@
 import { forWorkspace, prisma } from '@bid-os/db';
+import { isWithinLimit } from '@bid-os/core';
 
 export interface PlanLimits {
   tendersPerMonth: number;
@@ -59,7 +60,7 @@ export async function consume(
 ): Promise<boolean> {
   if (limit >= 0) {
     const usage = await getUsage(ws, period);
-    if ((usage[metric] ?? 0) + amount > limit) return false;
+    if (!isWithinLimit(usage[metric] ?? 0, amount, limit)) return false;
   }
   await incrementUsage(ws, metric, amount, period);
   return true;

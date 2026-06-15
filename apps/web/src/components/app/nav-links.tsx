@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FolderArchive, FolderKanban, LayoutDashboard, Settings } from 'lucide-react';
+import { BarChart3, FolderArchive, FolderKanban, LayoutDashboard, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const items = [
   { href: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, prefix: '/dashboard' },
   { href: '/tenders', label: 'المناقصات', icon: FolderKanban, prefix: '/tenders' },
   { href: '/documents', label: 'مكتبة الوثائق', icon: FolderArchive, prefix: '/documents' },
+  { href: '/analytics', label: 'التحليلات', icon: BarChart3, prefix: '/analytics' },
   { href: '/settings/account', label: 'الإعدادات', icon: Settings, prefix: '/settings' },
 ];
 

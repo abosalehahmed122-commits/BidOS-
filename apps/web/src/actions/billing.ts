@@ -2,9 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { forWorkspace, prisma } from '@bid-os/db';
-import { can } from '@bid-os/core';
+import { buildZatcaQr, can } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
-import { buildZatcaQr } from '@/lib/zatca';
 
 const PLACEHOLDER_VAT = '300000000000003';
 
