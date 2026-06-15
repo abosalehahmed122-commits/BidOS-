@@ -207,6 +207,15 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
           result.estimatedValueSar != null ? Math.round(result.estimatedValueSar * 100) : tender.estimatedValue,
       },
     });
+    await db.notification.create({
+      data: {
+        workspaceId: ws,
+        userId: tender.createdById,
+        type: 'ANALYSIS_COMPLETE',
+        title: 'اكتمل تحليل المناقصة',
+        body: tender.title,
+      },
+    });
     await db.auditLog.create({
       data: { workspaceId: ws, actorId: user.id, action: 'tender.analyze', entity: 'ExtractionRun', entityId: run.id },
     });

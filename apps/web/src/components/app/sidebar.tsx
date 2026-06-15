@@ -1,11 +1,17 @@
 import Link from 'next/link';
-import { LogOut } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
 import type { WorkspaceMembership } from '@bid-os/auth';
 import { ROLE_LABELS } from '@bid-os/core';
 import { logoutAction } from '@/actions/auth';
 import { NavLinks } from './nav-links';
 
-export function Sidebar({ membership }: { membership: WorkspaceMembership }) {
+export function Sidebar({
+  membership,
+  unreadCount = 0,
+}: {
+  membership: WorkspaceMembership;
+  unreadCount?: number;
+}) {
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-l border-white/5 bg-navy-900/40 p-4 lg:flex">
       <Link href="/dashboard" className="mb-6 flex items-center gap-2 px-2 pt-2">
@@ -21,6 +27,21 @@ export function Sidebar({ membership }: { membership: WorkspaceMembership }) {
       </div>
 
       <NavLinks />
+
+      <Link
+        href="/notifications"
+        className="mt-1 flex items-center justify-between rounded-xl px-3 py-2.5 text-sm text-slate-300 transition-colors hover:bg-white/5"
+      >
+        <span className="flex items-center gap-3">
+          <Bell className="h-4 w-4" />
+          التنبيهات
+        </span>
+        {unreadCount > 0 && (
+          <span className="rounded-full bg-gold-400 px-2 text-xs font-medium text-navy-950">
+            {unreadCount}
+          </span>
+        )}
+      </Link>
 
       <form action={logoutAction} className="mt-auto">
         <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition-colors hover:bg-white/5">
