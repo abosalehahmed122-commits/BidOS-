@@ -9,6 +9,7 @@ import {
   GAP_TYPE_LABELS,
   REQUIREMENT_CATEGORY_LABELS,
   RISK_CATEGORY_LABELS,
+  can,
   type BidFactor,
   type DeadlineType,
   type GapType,
@@ -16,6 +17,7 @@ import {
   type RiskCategory,
 } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
+import { ProposalsPanel } from '@/components/proposals/proposals-panel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -32,6 +34,7 @@ const TABS = [
   { key: 'requirements', label: 'المتطلبات' },
   { key: 'risks', label: 'النواقص والمخاطر' },
   { key: 'score', label: 'التقييم' },
+  { key: 'proposal', label: 'العرض' },
   { key: 'decisions', label: 'سجل القرارات' },
   { key: 'documents', label: 'المستندات' },
 ] as const;
@@ -64,6 +67,10 @@ export default async function TenderDetailPage({
       bidScore: true,
       decisionLogs: { orderBy: { decidedAt: 'desc' } },
       extractionRuns: { orderBy: { version: 'desc' }, take: 1 },
+      proposals: {
+        orderBy: { version: 'desc' },
+        include: { sections: { orderBy: { order: 'asc' } } },
+      },
     },
   });
   if (!tender) notFound();
@@ -73,6 +80,13 @@ export default async function TenderDetailPage({
   const lowConfidence = tender.requirements.filter((r) => r.confidence < 0.7).length;
   const lastRun = tender.extractionRuns[0];
   const factors = (tender.bidScore?.factors ?? []) as unknown as BidFactor[];
+  const proposalVMs = tender.proposals.map((p) => ({
+    id: p.id,
+    title: p.title,
+    version: p.version,
+    status: p.status,
+    sections: p.sections.map((s) => ({ id: s.id, title: s.title, contentMd: s.contentMd ?? '' })),
+  }));
 
   return (
     <div>
@@ -128,7 +142,7 @@ export default async function TenderDetailPage({
       </div>
 
       <div className="px-6 py-6 lg:px-10">
-        {!hasAnalysis && tab !== 'documents' && tab !== 'decisions' && (
+        {!hasAnalysis && tab !== 'documents' && tab !== 'decisions' && tab !== 'proposal' && (
           <EmptyAnalysis />
         )}
 
@@ -278,6 +292,16 @@ export default async function TenderDetailPage({
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {tab === 'proposal' && (
+          <ProposalsPanel
+            tenderId={tender.id}
+            proposals={proposalVMs}
+            canCreate={can(membership.role, 'proposal:create')}
+            canUpdate={can(membership.role, 'proposal:update')}
+            canDelete={can(membership.role, 'proposal:delete')}
+          />
         )}
 
         {tab === 'decisions' && (
