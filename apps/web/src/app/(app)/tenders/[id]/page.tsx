@@ -18,6 +18,8 @@ import {
 } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
 import { ProposalsPanel } from '@/components/proposals/proposals-panel';
+import { TasksPanel } from '@/components/tasks/tasks-panel';
+import { CommentsPanel } from '@/components/tasks/comments-panel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -35,6 +37,7 @@ const TABS = [
   { key: 'risks', label: 'النواقص والمخاطر' },
   { key: 'score', label: 'التقييم' },
   { key: 'proposal', label: 'العرض' },
+  { key: 'tasks', label: 'المهام' },
   { key: 'decisions', label: 'سجل القرارات' },
   { key: 'documents', label: 'المستندات' },
 ] as const;
@@ -74,6 +77,28 @@ export default async function TenderDetailPage({
     },
   });
   if (!tender) notFound();
+
+  const [members, taskRows, commentRows] = await Promise.all([
+    db.membership.findMany({ include: { user: true } }),
+    db.task.findMany({ where: { tenderId: tender.id }, orderBy: { createdAt: 'desc' } }),
+    db.comment.findMany({ where: { tenderId: tender.id }, orderBy: { createdAt: 'asc' } }),
+  ]);
+  const memberMap = new Map(members.map((m) => [m.userId, m.user.name] as const));
+  const memberList = members.map((m) => ({ id: m.userId, name: m.user.name }));
+  const taskVMs = taskRows.map((t) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description,
+    status: t.status,
+    assigneeName: t.assigneeId ? memberMap.get(t.assigneeId) ?? null : null,
+    due: t.dueAt ? formatDate(t.dueAt) : null,
+  }));
+  const commentVMs = commentRows.map((c) => ({
+    id: c.id,
+    body: c.body,
+    authorName: memberMap.get(c.authorId) ?? 'عضو',
+    createdAt: formatDate(c.createdAt),
+  }));
 
   const tab = TABS.find((t) => t.key === searchParams.tab)?.key ?? 'overview';
   const hasAnalysis = tender.requirements.length > 0 || !!tender.bidScore;
@@ -142,9 +167,11 @@ export default async function TenderDetailPage({
       </div>
 
       <div className="px-6 py-6 lg:px-10">
-        {!hasAnalysis && tab !== 'documents' && tab !== 'decisions' && tab !== 'proposal' && (
-          <EmptyAnalysis />
-        )}
+        {!hasAnalysis &&
+          tab !== 'documents' &&
+          tab !== 'decisions' &&
+          tab !== 'proposal' &&
+          tab !== 'tasks' && <EmptyAnalysis />}
 
         {tab === 'overview' && (
           <div className="grid gap-6 lg:grid-cols-3">
@@ -302,6 +329,22 @@ export default async function TenderDetailPage({
             canUpdate={can(membership.role, 'proposal:update')}
             canDelete={can(membership.role, 'proposal:delete')}
           />
+        )}
+
+        {tab === 'tasks' && (
+          <div className="space-y-6">
+            <TasksPanel
+              tenderId={tender.id}
+              tasks={taskVMs}
+              members={memberList}
+              canManage={can(membership.role, 'task:manage')}
+            />
+            <CommentsPanel
+              tenderId={tender.id}
+              comments={commentVMs}
+              canComment={can(membership.role, 'comment:create')}
+            />
+          </div>
         )}
 
         {tab === 'decisions' && (
