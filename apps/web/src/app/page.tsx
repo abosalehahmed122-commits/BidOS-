@@ -158,7 +158,10 @@ export default function LandingPage() {
       <footer className="border-t border-white/5">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-10 text-sm text-slate-400 sm:flex-row">
           <p>© {new Date().getFullYear()} Bid OS — جميع الحقوق محفوظة.</p>
-          <p className="text-slate-500">منصة إدارة وتحليل المناقصات السعودية</p>
+          <div className="flex items-center gap-4 text-slate-500">
+            <a href="/terms" className="hover:text-slate-300">الشروط والأحكام</a>
+            <span>منصة إدارة وتحليل المناقصات السعودية</span>
+          </div>
         </div>
       </footer>
     </main>

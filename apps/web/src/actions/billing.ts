@@ -4,10 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { forWorkspace, prisma } from '@bid-os/db';
 import { buildZatcaQr, can } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
+import { redeemDiscount } from '@/lib/discounts';
 
 const PLACEHOLDER_VAT = '300000000000003';
 
-export async function changePlanAction(planCode: string): Promise<void> {
+export async function changePlanAction(planCode: string, formData: FormData): Promise<void> {
   const { user, membership } = await requireSession();
   if (!can(membership.role, 'billing:manage')) throw new Error('لا تملك صلاحية إدارة الاشتراك');
   const ws = membership.workspaceId;
@@ -35,7 +36,12 @@ export async function changePlanAction(planCode: string): Promise<void> {
   // Paid plans get a ZATCA-compliant invoice. Payment provider is deferred, so
   // the invoice is OPEN (unpaid) until a gateway is connected.
   if (plan.priceMonthly > 0) {
-    const subtotal = plan.priceMonthly;
+    let subtotal = plan.priceMonthly;
+    const code = formData.get('discountCode')?.toString().trim();
+    if (code) {
+      const { discount } = await redeemDiscount(ws, code, subtotal);
+      subtotal = Math.max(0, subtotal - discount);
+    }
     const vatAmount = Math.round(subtotal * 0.15);
     const total = subtotal + vatAmount;
     const count = await prisma.invoice.count({ where: { workspaceId: ws } });

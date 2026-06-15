@@ -9,6 +9,7 @@ const items = [
   { href: '/settings/members', label: 'الأعضاء' },
   { href: '/settings/workspace', label: 'مساحة العمل' },
   { href: '/settings/billing', label: 'الاشتراك' },
+  { href: '/settings/discounts', label: 'أكواد الخصم' },
 ];
 
 export function SettingsNav() {

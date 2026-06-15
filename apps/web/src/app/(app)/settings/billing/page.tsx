@@ -127,7 +127,15 @@ export default async function BillingPage() {
                     ))}
                   </ul>
                   {canManage && !isCurrent && (
-                    <form action={changePlanAction.bind(null, p.code)}>
+                    <form action={changePlanAction.bind(null, p.code)} className="space-y-2">
+                      {p.priceMonthly > 0 && (
+                        <input
+                          name="discountCode"
+                          dir="ltr"
+                          placeholder="كود خصم (اختياري)"
+                          className="w-full rounded-lg border border-white/10 bg-navy-950/40 px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:border-gold-400 focus:outline-none"
+                        />
+                      )}
                       <SubmitButton variant="outline" className="w-full">
                         اختيار الباقة
                       </SubmitButton>

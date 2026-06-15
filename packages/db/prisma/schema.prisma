@@ -263,6 +263,31 @@ model Workspace {
   usageMeters     UsageMeter[]
   tenders         Tender[]
   companyDocs     CompanyDocument[]
+  discountCodes   DiscountCode[]
+}
+
+enum DiscountType {
+  PERCENT // value = نسبة مئوية 0..100
+  FIXED // value = مبلغ ثابت بالهللات
+}
+
+/// أكواد خصم على الاشتراك — يديرها الأدمن لكل مساحة عمل.
+model DiscountCode {
+  id             String       @id @default(cuid())
+  workspaceId    String
+  code           String
+  type           DiscountType @default(PERCENT)
+  value          Int
+  active         Boolean      @default(true)
+  maxRedemptions Int?
+  redeemedCount  Int          @default(0)
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, code])
+  @@index([workspaceId])
 }
 
 model Membership {
