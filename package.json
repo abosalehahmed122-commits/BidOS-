@@ -15,6 +15,7 @@
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "pnpm --filter @bid-os/db generate",
+    "db:push": "pnpm --filter @bid-os/db push",
     "db:validate": "pnpm --filter @bid-os/db validate",
     "db:migrate": "pnpm --filter @bid-os/db migrate",
     "db:seed": "pnpm --filter @bid-os/db seed",

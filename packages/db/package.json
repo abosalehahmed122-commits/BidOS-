@@ -11,6 +11,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "generate": "prisma generate",
+    "push": "prisma db push",
     "validate": "prisma validate",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
