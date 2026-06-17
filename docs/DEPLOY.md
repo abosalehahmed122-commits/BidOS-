@@ -10,6 +10,39 @@
 
 ---
 
+## ⛔ فحص متغيّراتك الحالية (محدّث)
+
+**الموجود (8):** `DATABASE_URL` · `DIRECT_DATABASE_URL` · `ANTHROPIC_API_KEY` · `S3_ENDPOINT` · `S3_PUBLIC_URL` · `S3_ACCESS_KEY_ID` · `S3_SECRET_ACCESS_KEY` · `RESEND_API_KEY`
+
+**الناقص (18) — الصقه دفعة واحدة عبر Settings → Environment Variables → Import .env:**
+
+```dotenv
+NODE_ENV=production
+APP_URL=https://YOUR-APP.vercel.app
+AUTH_SECRET=K4PE72B13qleXNvkW9IQtPUMTNZMyAbZ5aOZfwd0nko=
+SESSION_TTL_DAYS=30
+AI_PROVIDER=anthropic
+AI_EXTRACTION_MODEL=claude-sonnet-4-6
+AI_REASONING_MODEL=claude-opus-4-8
+STORAGE_DRIVER=s3
+S3_REGION=auto
+S3_BUCKET=bid-os
+QUEUE_DRIVER=inline
+EMAIL_DRIVER=resend
+EMAIL_FROM=Bid OS <no-reply@yourdomain.sa>
+SMS_DRIVER=console
+SMS_SENDER=BidOS
+PAYMENT_PROVIDER=none
+ZATCA_SELLER_NAME=شركتك
+ZATCA_SELLER_VAT_NUMBER=300000000000003
+```
+
+الحرجة من الناقص (بدونها لا يعمل): **`AUTH_SECRET`** (الجلسات)، **`STORAGE_DRIVER=s3`** و**`S3_BUCKET`** (الرفع)، **`AI_PROVIDER=anthropic`** (لاستخدام Claude الحقيقي).
+- غيّر `S3_BUCKET` لاسم الـ bucket الفعلي في R2 إن لم يكن `bid-os`.
+- املأ `APP_URL` برابط مشروعك بعد أول نشر.
+
+---
+
 ## 1) قيم جاهزة — انسخها كما هي إلى Vercel
 
 ```dotenv
