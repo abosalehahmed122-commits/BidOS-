@@ -1,4 +1,4 @@
-import { FileText, Trash2 } from 'lucide-react';
+import { Download, FileText, Trash2 } from 'lucide-react';
 import { forWorkspace } from '@bid-os/db';
 import { can } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
@@ -76,13 +76,22 @@ export default async function DocumentsPage() {
                     ) : (
                       <span />
                     )}
-                    {canManage && (
-                      <form action={deleteCompanyDocAction.bind(null, doc.id)}>
-                        <Button type="submit" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-300">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </form>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <a
+                        href={`/api/files/download?type=company&id=${doc.id}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/5 hover:text-gold-400"
+                        title="تنزيل"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                      {canManage && (
+                        <form action={deleteCompanyDocAction.bind(null, doc.id)}>
+                          <Button type="submit" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-300">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </form>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

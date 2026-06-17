@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AlertTriangle, FileText, Quote, Sparkles } from 'lucide-react';
+import { AlertTriangle, Download, FileText, Quote, Sparkles } from 'lucide-react';
 import { forWorkspace } from '@bid-os/db';
 import {
   BID_RECOMMENDATION_LABELS,
@@ -390,6 +390,14 @@ export default async function TenderDetailPage({
                       </p>
                     </div>
                   </div>
+                  <a
+                    href={`/api/files/download?type=tender&id=${doc.id}`}
+                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-200 transition-colors hover:bg-white/5"
+                    title="تنزيل"
+                  >
+                    <Download className="h-4 w-4" />
+                    تنزيل
+                  </a>
                 </CardContent>
               </Card>
             ))}
