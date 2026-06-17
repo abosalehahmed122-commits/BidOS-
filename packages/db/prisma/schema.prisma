@@ -216,18 +216,33 @@ enum UsageMetric {
 // ============================================================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String
-  passwordHash  String
-  emailVerified DateTime?
-  image         String?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String
+  passwordHash    String
+  emailVerified   DateTime?
+  phone           String?
+  phoneVerifiedAt DateTime?
+  image           String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   memberships Membership[]
   sessions    Session[]
+}
+
+/// One-time SMS codes for phone verification (anti-abuse). Keyed by phone.
+model PhoneOtp {
+  id        String    @id @default(cuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  consumedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([phone])
 }
 
 model Session {

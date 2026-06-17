@@ -44,14 +44,14 @@ async function main() {
     {
       code: 'basic',
       name: 'أساسي',
-      priceMonthly: 49900,
+      priceMonthly: 14900, // 149 ر.س قبل الضريبة (171.35 شامل 15%)
       limits: { tendersPerMonth: 10, aiPagesPerMonth: 600, seats: 5, storageBytes: 5368709120, proposalsPerMonth: 10 },
       features: ['كل ميزات التجريبي', 'مكتبة وثائق الشركة', 'توليد العروض'],
     },
     {
       code: 'pro',
       name: 'احترافي',
-      priceMonthly: 149900,
+      priceMonthly: 49900, // 499 ر.س قبل الضريبة (573.85 شامل 15%)
       limits: { tendersPerMonth: 40, aiPagesPerMonth: 3000, seats: 15, storageBytes: 53687091200, proposalsPerMonth: 40 },
       features: ['كل ميزات الأساسي', 'فرق العمل والمهام', 'رادار المواعيد', 'تحليلات متقدمة'],
     },
@@ -64,7 +64,7 @@ async function main() {
     },
   ];
   for (const p of plans) {
-    await prisma.plan.upsert({ where: { code: p.code }, update: { name: p.name, limits: p.limits, features: p.features }, create: p });
+    await prisma.plan.upsert({ where: { code: p.code }, update: { name: p.name, priceMonthly: p.priceMonthly, limits: p.limits, features: p.features }, create: p });
   }
   const proPlan = await prisma.plan.findUniqueOrThrow({ where: { code: 'pro' } });
 

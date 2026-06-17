@@ -10,10 +10,13 @@ import {
   SESSION_COOKIE_NAME,
   verifyPassword,
 } from '@bid-os/auth';
-import { loginSchema, registerSchema } from '@bid-os/core';
+import { loginSchema, registerSchema, verifyOtpSchema } from '@bid-os/core';
+import { requireSession } from '@/lib/session';
+import { issuePhoneOtp, verifyPhoneOtp } from '@/lib/otp';
 
 export interface AuthFormState {
   error?: string;
+  success?: string;
 }
 
 function slugify(name: string): string {
@@ -57,13 +60,14 @@ export async function registerAction(
   const parsed = registerSchema.safeParse({
     name: formData.get('name'),
     email: formData.get('email'),
+    phone: formData.get('phone'),
     password: formData.get('password'),
     workspaceName: formData.get('workspaceName'),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'بيانات غير صحيحة' };
   }
-  const { name, email, password, workspaceName } = parsed.data;
+  const { name, email, phone, password, workspaceName } = parsed.data;
 
   if (await prisma.user.findUnique({ where: { email } })) {
     return { error: 'البريد الإلكتروني مستخدم مسبقاً' };
@@ -72,7 +76,7 @@ export async function registerAction(
   const passwordHash = await hashPassword(password);
   const user = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({
-      data: { name, email, passwordHash, emailVerified: new Date() },
+      data: { name, email, phone, passwordHash, emailVerified: new Date() },
     });
     const workspace = await tx.workspace.create({
       data: { name: workspaceName, slug: await uniqueSlug(tx, slugify(workspaceName)) },
@@ -96,7 +100,36 @@ export async function registerAction(
 
   const { token, expiresAt } = await createSession(user.id, sessionMeta());
   setSessionCookie(token, expiresAt);
+  await issuePhoneOtp(phone);
+  redirect('/verify-phone');
+}
+
+export async function verifyPhoneOtpAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const { user } = await requireSession();
+  const parsed = verifyOtpSchema.safeParse({ code: formData.get('code') });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'رمز غير صالح' };
+
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!dbUser?.phone) return { error: 'لا يوجد رقم جوال مرتبط بالحساب' };
+
+  const ok = await verifyPhoneOtp(dbUser.phone, parsed.data.code);
+  if (!ok) return { error: 'رمز غير صحيح أو منتهي الصلاحية' };
+
+  await prisma.user.update({ where: { id: user.id }, data: { phoneVerifiedAt: new Date() } });
   redirect('/dashboard');
+}
+
+export async function resendPhoneOtpAction(
+  _prev: AuthFormState,
+  _formData: FormData,
+): Promise<AuthFormState> {
+  const { user } = await requireSession();
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  if (dbUser?.phone && !dbUser.phoneVerifiedAt) await issuePhoneOtp(dbUser.phone);
+  return { success: 'تم إرسال رمز جديد إلى جوالك' };
 }
 
 export async function loginAction(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {

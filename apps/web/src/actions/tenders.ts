@@ -2,14 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { forWorkspace, type Prisma } from '@bid-os/db';
+import { forWorkspace, prisma, type Prisma } from '@bid-os/db';
 import { analyzeAndScore, getProvider, type DocumentPage } from '@bid-os/ai';
 import { can, createTenderSchema, ForbiddenError, recordDecisionSchema } from '@bid-os/core';
 import { requireSession } from '@/lib/session';
 import { getStorage, tenderDocKey } from '@/lib/storage';
 import { extractPdfPages } from '@/lib/pdf';
 import { enqueue } from '@/lib/queue';
-import { consume, getBillingContext, incrementUsage } from '@/lib/billing';
+import { consume, getBillingContext, getUsage, incrementUsage } from '@/lib/billing';
 
 export interface TenderFormState {
   error?: string;
@@ -93,8 +93,19 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
   const tender = await db.tender.findFirst({ where: { id: tenderId } });
   if (!tender) throw new Error('المناقصة غير موجودة');
 
+  // Free tier requires a verified phone (anti-abuse: one phone per free account).
+  const { plan, limits } = await getBillingContext(ws);
+  if ((plan?.priceMonthly ?? 0) === 0) {
+    const u = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { phoneVerifiedAt: true },
+    });
+    if (!u?.phoneVerifiedAt) {
+      throw new Error('يرجى توثيق رقم جوالك أولاً من صفحة التحقق قبل التحليل في الباقة المجانية.');
+    }
+  }
+
   // Enforce the plan's monthly tender-analysis limit.
-  const { limits } = await getBillingContext(ws);
   const allowed = await consume(ws, 'TENDERS_ANALYZED', 1, limits.tendersPerMonth);
   if (!allowed) {
     throw new Error('تم بلوغ حد عدد المناقصات في باقتك لهذا الشهر. يرجى ترقية الباقة من الإعدادات.');
@@ -143,10 +154,24 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
       }
     }
 
-    if (pages.length > 0) await incrementUsage(ws, 'AI_PAGES', pages.length);
+    // Cap pages to the plan's remaining monthly AI-page budget, and to a preview
+    // window on the free tier — hard-bounds cost and drives upgrades on big booklets.
+    const FREE_PREVIEW_PAGES = 25;
+    const isFreeTier = (plan?.priceMonthly ?? 0) === 0;
+    const usedPages = (await getUsage(ws)).AI_PAGES ?? 0;
+    const monthlyBudget =
+      limits.aiPagesPerMonth < 0 ? pages.length : Math.max(0, limits.aiPagesPerMonth - usedPages);
+    const perRunCap = isFreeTier ? Math.min(monthlyBudget, FREE_PREVIEW_PAGES) : monthlyBudget;
+    const usablePages = pages.slice(0, perRunCap);
+    const truncated = pages.length > 0 && usablePages.length < pages.length;
+
+    if (pages.length > 0 && usablePages.length === 0) {
+      throw new Error('بلغت حدّ صفحات التحليل في باقتك لهذا الشهر. يرجى ترقية الباقة من الإعدادات.');
+    }
+    if (usablePages.length > 0) await incrementUsage(ws, 'AI_PAGES', usablePages.length);
 
     const { result, usage, bidScore } = await enqueue('tender.analyze', () =>
-      analyzeAndScore(provider, { title: tender.title, pages }),
+      analyzeAndScore(provider, { title: tender.title, pages: usablePages }),
     );
 
     // Replace previously derived data (decisions/audit are kept).
@@ -226,6 +251,17 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
         body: tender.title,
       },
     });
+    if (truncated) {
+      await db.notification.create({
+        data: {
+          workspaceId: ws,
+          userId: tender.createdById,
+          type: 'OTHER',
+          title: 'تحليل معاينة (جزئي)',
+          body: `حُلِّلت أول ${usablePages.length} صفحة من ${pages.length} (حدّ الباقة). رقِّ الباقة لتحليل الكراسة كاملة.`,
+        },
+      });
+    }
     await db.auditLog.create({
       data: { workspaceId: ws, actorId: user.id, action: 'tender.analyze', entity: 'ExtractionRun', entityId: run.id },
     });

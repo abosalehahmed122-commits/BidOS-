@@ -25,6 +25,10 @@ export function RegisterForm() {
         <Input id="email" name="email" type="email" required dir="ltr" placeholder="you@company.sa" />
       </div>
       <div>
+        <Label htmlFor="phone">رقم الجوال</Label>
+        <Input id="phone" name="phone" type="tel" required dir="ltr" placeholder="05XXXXXXXX" />
+      </div>
+      <div>
         <Label htmlFor="password">كلمة المرور</Label>
         <Input id="password" name="password" type="password" required placeholder="٨ أحرف على الأقل مع رقم" />
       </div>
