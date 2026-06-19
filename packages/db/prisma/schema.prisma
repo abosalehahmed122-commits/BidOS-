@@ -225,6 +225,7 @@ model User {
   phoneVerifiedAt DateTime?
   image           String?
   isActive        Boolean   @default(true)
+  isSuperAdmin    Boolean   @default(false) // platform operator (cross-tenant admin)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

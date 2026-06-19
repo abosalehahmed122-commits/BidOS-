@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Bell, LogOut } from 'lucide-react';
+import { Bell, LogOut, ShieldCheck } from 'lucide-react';
 import type { WorkspaceMembership } from '@bid-os/auth';
 import { ROLE_LABELS } from '@bid-os/core';
 import { logoutAction } from '@/actions/auth';
@@ -8,9 +8,11 @@ import { NavLinks } from './nav-links';
 export function Sidebar({
   membership,
   unreadCount = 0,
+  isSuperAdmin = false,
 }: {
   membership: WorkspaceMembership;
   unreadCount?: number;
+  isSuperAdmin?: boolean;
 }) {
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-l border-white/5 bg-navy-900/40 p-4 lg:flex">
@@ -42,6 +44,16 @@ export function Sidebar({
           </span>
         )}
       </Link>
+
+      {isSuperAdmin && (
+        <Link
+          href="/admin"
+          className="mt-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gold-300 transition-colors hover:bg-gold-400/10"
+        >
+          <ShieldCheck className="h-4 w-4" />
+          أدمن المنصّة
+        </Link>
+      )}
 
       <form action={logoutAction} className="mt-auto">
         <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition-colors hover:bg-white/5">

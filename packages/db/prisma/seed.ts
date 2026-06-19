@@ -72,8 +72,16 @@ async function main() {
   const passwordHash = await bcrypt.hash('Demo1234!', 10);
   await prisma.user.upsert({
     where: { id: USER },
-    update: {},
-    create: { id: USER, email: 'demo@bid-os.sa', name: 'أحمد العتيبي', passwordHash, emailVerified: new Date() },
+    update: { isSuperAdmin: true },
+    create: {
+      id: USER,
+      email: 'demo@bid-os.sa',
+      name: 'أحمد العتيبي',
+      passwordHash,
+      emailVerified: new Date(),
+      phoneVerifiedAt: new Date(),
+      isSuperAdmin: true,
+    },
   });
   await prisma.workspace.upsert({
     where: { id: WS },
