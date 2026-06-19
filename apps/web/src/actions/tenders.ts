@@ -170,8 +170,19 @@ export async function analyzeTenderAction(tenderId: string): Promise<void> {
     }
     if (usablePages.length > 0) await incrementUsage(ws, 'AI_PAGES', usablePages.length);
 
+    // Paid full analyses send the booklet PDF natively (handles scanned PDFs +
+    // page citations). Free previews stay on the capped text pages to bound cost.
+    let pdfBase64: string | undefined;
+    if (!isFreeTier && booklet && process.env.AI_PROVIDER === 'anthropic') {
+      try {
+        pdfBase64 = (await getStorage().read(booklet.storageKey)).toString('base64');
+      } catch {
+        // fall back to the extracted text pages
+      }
+    }
+
     const { result, usage, bidScore } = await enqueue('tender.analyze', () =>
-      analyzeAndScore(provider, { title: tender.title, pages: usablePages }),
+      analyzeAndScore(provider, { title: tender.title, pages: usablePages, pdfBase64 }),
     );
 
     // Replace previously derived data (decisions/audit are kept).

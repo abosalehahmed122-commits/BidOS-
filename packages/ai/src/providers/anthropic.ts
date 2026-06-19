@@ -47,21 +47,32 @@ export class AnthropicProvider implements AIProvider {
     const inputSchema = toToolInputSchema(extractionResultSchema);
 
     const content: ContentParam[] = [
-      { type: 'text', text: `عنوان المنافسة: ${input.title}\nحلّل صفحات الكراسة التالية:` },
+      { type: 'text', text: `عنوان المنافسة: ${input.title}\nحلّل كراسة الشروط التالية:` },
     ];
 
-    for (const page of input.pages) {
-      if (page.imageBase64) {
-        content.push({
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: page.mediaType ?? 'image/png',
-            data: page.imageBase64,
-          },
-        });
-      } else if (page.text) {
-        content.push({ type: 'text', text: `--- صفحة ${page.pageNumber} ---\n${page.text}` });
+    if (input.pdfBase64) {
+      // Native PDF — Claude reads scanned + digital booklets with page citations.
+      // PDF document blocks are GA on the API; the installed SDK's content union
+      // doesn't type them yet, so we cast (runtime shape is correct).
+      content.push({
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: input.pdfBase64 },
+        citations: { enabled: true },
+      } as unknown as ContentParam);
+    } else {
+      for (const page of input.pages) {
+        if (page.imageBase64) {
+          content.push({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: page.mediaType ?? 'image/png',
+              data: page.imageBase64,
+            },
+          });
+        } else if (page.text) {
+          content.push({ type: 'text', text: `--- صفحة ${page.pageNumber} ---\n${page.text}` });
+        }
       }
     }
 

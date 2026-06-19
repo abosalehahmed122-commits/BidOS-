@@ -11,6 +11,13 @@ export interface DocumentPage {
 export interface AnalyzeTenderInput {
   title: string;
   pages: DocumentPage[];
+  /**
+   * Whole-booklet PDF (base64). When present, providers that support native PDF
+   * input send it directly — Claude reads scanned AND digital PDFs with
+   * page-accurate citations, no separate OCR/render step. Takes precedence over
+   * `pages` on the Anthropic provider.
+   */
+  pdfBase64?: string;
 }
 
 export interface AIUsage {
