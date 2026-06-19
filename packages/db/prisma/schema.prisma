@@ -267,10 +267,11 @@ model Workspace {
   slug       String   @unique
   logoUrl    String?
   brandColor String   @default("#0B1F3A")
-  vatNumber  String?
-  crNumber   String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  vatNumber   String?
+  crNumber    String?
+  suspendedAt DateTime? // set by platform admin — blocks all member access
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   memberships     Membership[]
   subscription    Subscription?

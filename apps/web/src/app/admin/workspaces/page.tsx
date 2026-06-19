@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { prisma } from '@bid-os/db';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,9 +31,10 @@ export default async function AdminWorkspaces() {
         {workspaces.map((ws) => {
           const owner = ws.memberships[0]?.user;
           return (
-            <div
+            <Link
               key={ws.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4"
+              href={`/admin/workspaces/${ws.id}`}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-colors hover:bg-white/5"
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium text-slate-100">{ws.name}</p>
@@ -41,6 +43,7 @@ export default async function AdminWorkspaces() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                {ws.suspendedAt && <Badge variant="red">موقوفة</Badge>}
                 <Badge variant="gold">{ws.subscription?.plan.name ?? 'بدون باقة'}</Badge>
                 {ws.subscription && (
                   <Badge variant={ws.subscription.status === 'ACTIVE' ? 'emerald' : 'slate'}>
@@ -51,7 +54,7 @@ export default async function AdminWorkspaces() {
                 <span>· {ws._count.tenders} مناقصة</span>
                 <span>· {formatDate(ws.createdAt)}</span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </CardContent>

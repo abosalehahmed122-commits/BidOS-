@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { toggleUserActiveAction } from '@/actions/admin';
+import { toggleSuperAdminAction, toggleUserActiveAction } from '@/actions/admin';
 
 export function UserRow({
   id,
@@ -43,11 +43,18 @@ export function UserRow({
         <span>· {created}</span>
         {isActive ? <Badge variant="emerald">نشط</Badge> : <Badge variant="red">موقوف</Badge>}
         {!isSelf && (
-          <form action={toggleUserActiveAction.bind(null, id)}>
-            <Button type="submit" variant="outline" size="sm">
-              {isActive ? 'إيقاف' : 'تفعيل'}
-            </Button>
-          </form>
+          <>
+            <form action={toggleSuperAdminAction.bind(null, id)}>
+              <Button type="submit" variant="ghost" size="sm">
+                {isSuperAdmin ? 'إلغاء الأدمن' : 'ترقية لأدمن'}
+              </Button>
+            </form>
+            <form action={toggleUserActiveAction.bind(null, id)}>
+              <Button type="submit" variant="outline" size="sm">
+                {isActive ? 'إيقاف' : 'تفعيل'}
+              </Button>
+            </form>
+          </>
         )}
       </div>
     </div>

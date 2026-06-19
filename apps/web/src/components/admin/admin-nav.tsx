@@ -8,6 +8,8 @@ const items = [
   { href: '/admin', label: 'نظرة عامة' },
   { href: '/admin/workspaces', label: 'الشركات' },
   { href: '/admin/users', label: 'المستخدمون' },
+  { href: '/admin/revenue', label: 'الإيرادات' },
+  { href: '/admin/audit', label: 'سجل التدقيق' },
 ];
 
 export function AdminNav() {
